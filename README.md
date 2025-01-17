@@ -1,109 +1,137 @@
-# Image Captioning with InceptionV3 and LSTM
+# Image Captioning with CNN-RNN Architecture
 
-This repository contains a deep learning model for generating captions for images using the **Flickr8k dataset**. The model combines a **pre-trained Inception V3 model** for feature extraction and an **LSTM-based decoder** for generating textual captions.
+This repository contains an implementation of an image captioning system built using a combination of Convolutional Neural Networks (CNNs) and Recurrent Neural Networks (RNNs). The model generates captions for images by extracting visual features using a pre-trained Inception V3 model and generating textual descriptions using an LSTM decoder.
+
+---
 
 ## Table of Contents
-
-1. [Project Overview](#project-overview)
-2. [Dependencies](#dependencies)
-3. [Dataset](#dataset)
-4. [Model Architecture](#model-architecture)
-5. [Training Process](#training-process)
-6. [Usage](#usage)
+1. [Introduction](#introduction)
+2. [Dataset](#dataset)
+3. [Model Architecture](#model-architecture)
+4. [Implementation Details](#implementation-details)
+5. [Setup and Installation](#setup-and-installation)
+6. [Training](#training)
 7. [Results](#results)
-8. [License](#license)
+8. [How to Use](#how-to-use)
+9. [References](#references)
 
-## Project Overview
+---
 
-This project uses **Inception V3**, a popular CNN architecture, to extract image features and feed them into an **LSTM-based sequence generation model** to generate captions. The approach utilizes:
+## Introduction
+Image captioning is a task that combines computer vision and natural language processing. This project uses:
+- **Inception V3** (pre-trained on ImageNet) for feature extraction.
+- **LSTM** for sequence generation of captions.
 
-- **Feature extraction** via a custom Encoder class based on Inception V3 (with pre-trained weights).
-- **Sequence generation** using an LSTM network, which generates captions word by word.
-- **Teacher forcing** during training to improve convergence.
+The model:
+- Encodes image features using the CNN.
+- Generates captions word by word using the RNN, with teacher forcing during training and greedy decoding during inference.
 
-## Dependencies
+---
 
-To run this project, you need the following Python libraries:
+## Dataset
+The [Flickr8k dataset](https://www.kaggle.com/adityajn105/flickr8k) is used for training and evaluation. It consists of:
+- **8,000 images**, each with 5 corresponding captions.
+- Annotations in a `.csv` file.
 
-- `torch` (PyTorch)
-- `torchvision`
-- `torchsummary`
-- `spacy`
-- `Pandas`
-- `PIL`
-- `kagglehub`
+---
 
-# Install dependencies using `pip`:
+## Model Architecture
+1. **Encoder**:
+   - Uses Inception V3 with the fully connected layers replaced by a linear layer to produce feature embeddings.
+   - Gradients are disabled for all layers except the final linear layer.
 
-bash
-pip install torch torchvision torchsummary spacy pandas pillow kagglehub
-Also, download the required SpaCy language model:
+2. **Decoder**:
+   - Uses an embedding layer to convert words into dense vectors.
+   - An LSTM generates captions based on the image features and word embeddings.
+   - Outputs are passed through a linear layer to predict the next word.
 
-bash
-Copy
-Edit
-python -m spacy download en_core_web_sm
-Dataset
-The model is trained on the Flickr8k dataset, which contains 8,000 images and corresponding captions. You can download the dataset via KaggleHub:
+3. **Vocabulary**:
+   - Built using SpaCy for tokenization.
+   - Contains special tokens: `<PAD>`, `<SOS>`, `<EOS>`, and `<UNK>`.
 
-python
-Copy
-Edit
-import kagglehub
-path = kagglehub.dataset_download("adityajn105/flickr8k")
-The dataset contains two main files:
+---
 
-Images folder containing the images.
-Captions file containing image IDs and associated captions.
-Model Architecture
-EncoderCNN (Inception V3): Uses the Inception V3 model (without the fully connected layers) for feature extraction, outputting an embedding vector for each image.
-DecoderRNN (LSTM): The features extracted by the encoder are passed to an LSTM network. The LSTM generates word sequences for captions.
-Vocabulary: Built using SpaCy to map words to indices and prepare data for the model.
-CNNtoRNN: Combines the Encoder and Decoder into a single architecture.
-Training Process
-Data Preprocessing: The images are resized, cropped, and normalized using torchvision.transforms. Captions are tokenized and numericalized using SpaCy.
-Model Training: The model is trained for 10 epochs using CrossEntropyLoss. During training, the actual caption is fed to the LSTM (teacher forcing). During testing, the predicted word is fed back as input for the next word prediction.
-Hyperparameters:
-embed_size = 256
-hidden_size = 256
-num_layers = 1
-learning_rate = 3e-2
-batch_size = 32
-num_epochs = 10
-Usage
-Clone the repository:
+## Implementation Details
+- **Framework**: PyTorch
+- **Preprocessing**:
+  - Images are resized to 299x299 and normalized.
+  - Captions are tokenized and converted to indices.
+  - Batches are padded for consistent input lengths.
+- **Loss Function**:
+  - CrossEntropyLoss with padding ignored.
+- **Optimizer**:
+  - Adam optimizer with a learning rate of 3e-2.
 
-bash
-Copy
-Edit
-git clone https://github.com/yourusername/image-captioning.git
-cd image-captioning
+---
+
+## Setup and Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/image-captioning
+   cd image-captioning
+   ```
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Download the dataset using Kaggle API:
+   ```bash
+   kaggle datasets download -d adityajn105/flickr8k
+   ```
+4. Extract the dataset:
+   ```bash
+   unzip flickr8k.zip -d data/
+   ```
+
+---
+
+## Training
 Run the training script:
-
-bash
-Copy
-Edit
+```bash
 python train.py
-Use the trained model for inference (captions generation):
+```
+Hyperparameters:
+- Embedding size: 256
+- Hidden size: 256
+- Batch size: 32
+- Number of epochs: 10
 
-python
-Copy
-Edit
-model = CNNtoRNN(embed_size, hidden_size, vocab_size, num_layers)
-caption = model.caption_image(image, dataset.vocab)
-print("Generated Caption: ", caption)
-Results
-The model’s accuracy and loss are logged via TensorBoard during training. You can visualize the metrics by running:
+During training:
+- Training loss and accuracy are logged to TensorBoard.
 
-bash
-Copy
-Edit
-tensorboard --logdir=runs
-License
-This project is licensed under the MIT License.
+---
 
-csharp
-Copy
-Edit
+## Results
+- Model learns to generate meaningful captions for images.
+- Example:
+  - **Input Image**:
+    ![Example Image](path/to/image.jpg)
+  - **Generated Caption**: "A dog running in a grassy field."
 
-You can copy-paste this into a `README.md` file in your GitHub repository.
+---
+
+## How to Use
+1. Load a trained model checkpoint:
+   ```python
+   from model import CNNtoRNN
+   model = CNNtoRNN(embed_size, hidden_size, vocab_size, num_layers)
+   model.load_state_dict(torch.load("my_checkpoint.pth.tar"))
+   ```
+2. Generate captions:
+   ```python
+   caption = model.caption_image(image, vocabulary)
+   print("Generated Caption:", " ".join(caption))
+   ```
+
+---
+
+## References
+- [PyTorch Documentation](https://pytorch.org/docs/)
+- [Inception V3 Paper](https://arxiv.org/abs/1512.00567)
+- [Flickr8k Dataset](https://www.kaggle.com/adityajn105/flickr8k)
+
+---
+
+## License
+This project is licensed under the MIT License. See the `LICENSE` file for details.
+
